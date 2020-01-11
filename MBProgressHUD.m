@@ -82,12 +82,7 @@ static const CGFloat MBDefaultDetailsLabelFontSize = 12.f;
     _mode = MBProgressHUDModeIndeterminate;
     _margin = 20.0f;
     _defaultMotionEffectsEnabled = NO;
-
-    if (@available(iOS 13.0, tvOS 13, *)) {
-       _contentColor = [[UIColor labelColor] colorWithAlphaComponent:0.7f];
-    } else {
-        _contentColor = [UIColor colorWithWhite:0.f alpha:0.7f];
-    }
+    _contentColor = [UIColor colorWithWhite:0.f alpha:0.7f];
 
     // Transparent background
     self.opaque = NO;
@@ -370,9 +365,16 @@ static const CGFloat MBDefaultDetailsLabelFontSize = 12.f;
     if (mode == MBProgressHUDModeIndeterminate) {
         if (!isActivityIndicator) {
             // Update to indeterminate indicator
+            UIActivityIndicatorView *activityIndicator;
             [indicator removeFromSuperview];
-            indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-            [(UIActivityIndicatorView *)indicator startAnimating];
+            if (@available(iOS 13.0, *)) {
+                activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
+                activityIndicator.color = [UIColor whiteColor];
+            } else {
+               activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:0 /* UIActivityIndicatorViewStyleWhiteLarge */];
+            }
+            [activityIndicator startAnimating];
+            indicator = activityIndicator;
             [self.bezelView addSubview:indicator];
         }
     }
@@ -728,7 +730,7 @@ static const CGFloat MBDefaultDetailsLabelFontSize = 12.f;
 #pragma mark - Notifications
 
 - (void)registerForNotifications {
-#if !TARGET_OS_TV
+#if !TARGET_OS_TV && !TARGET_OS_MACCATALYST
     NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
 
     [nc addObserver:self selector:@selector(statusBarOrientationDidChange:)
@@ -737,13 +739,13 @@ static const CGFloat MBDefaultDetailsLabelFontSize = 12.f;
 }
 
 - (void)unregisterFromNotifications {
-#if !TARGET_OS_TV
+#if !TARGET_OS_TV && !TARGET_OS_MACCATALYST
     NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
     [nc removeObserver:self name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
 #endif
 }
 
-#if !TARGET_OS_TV
+#if !TARGET_OS_TV && !TARGET_OS_MACCATALYST
 - (void)statusBarOrientationDidChange:(NSNotification *)notification {
     UIView *superview = self.superview;
     if (!superview) {
@@ -1047,17 +1049,8 @@ static const CGFloat MBDefaultDetailsLabelFontSize = 12.f;
 - (instancetype)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
         _style = MBProgressHUDBackgroundStyleBlur;
-        if (@available(iOS 13.0, *)) {
-            #if TARGET_OS_TV
-            _blurEffectStyle = UIBlurEffectStyleRegular;
-            #else
-            _blurEffectStyle = UIBlurEffectStyleSystemThickMaterial;
-            #endif
-            // Leaving the color unassigned yields best results.
-        } else {
-            _blurEffectStyle = UIBlurEffectStyleLight;
-            _color = [UIColor colorWithWhite:0.8f alpha:0.6f];
-        }
+        _blurEffectStyle = UIBlurEffectStyleLight;
+        _color = [UIColor colorWithWhite:0.8f alpha:0.6f];
 
         self.clipsToBounds = YES;
 
@@ -1156,9 +1149,8 @@ static const CGFloat MBDefaultDetailsLabelFontSize = 12.f;
 }
 
 - (CGSize)intrinsicContentSize {
-    // Only show if we have associated control events and a title
-    if ((self.allControlEvents == 0) || ([self titleForState:UIControlStateNormal].length == 0))
-		return CGSizeZero;
+    // Only show if we have associated control events
+    if (self.allControlEvents == 0) return CGSizeZero;
     CGSize size = [super intrinsicContentSize];
     // Add some side padding
     size.width += 20.f;

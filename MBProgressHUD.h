@@ -302,7 +302,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic, readonly) UILabel *detailsLabel;
 
 /**
- * A button that is placed below the labels. Visible only if a target / action is added and a title is assigned.. 
+ * A button that is placed below the labels. Visible only if a target / action is added. 
  */
 @property (strong, nonatomic, readonly) UIButton *button;
 
@@ -399,12 +399,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * The background color or the blur tint color.
- *
- * Defaults to nil on iOS 13 and later and
- * `[UIColor colorWithWhite:0.8f alpha:0.6f]`
- * on older systems.
  */
-@property (nonatomic, strong, nullable) UIColor *color;
+@property (nonatomic, strong) UIColor *color;
 
 @end
 
